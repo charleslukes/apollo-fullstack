@@ -2,7 +2,18 @@ const { gql } = require("apollo-server");
 
 const typeDefs = gql`
   type Query {
-    launches: [Launch]!
+    launches(
+      # replace the current launches query with this one.
+      """
+      The number of result to show must be >= 1 by default = 20
+      """
+      pageSize: Int
+
+      """
+      If you add a cursor here, it will only return results _after_ this cursor
+      """
+      after: String
+    ): LaunchConnection!
     launch(id: ID!): Launch
 
     # Queries for the current user
@@ -25,7 +36,7 @@ const typeDefs = gql`
 
   type Mission {
     name: String
-    missionPatch(size: PatchSize): String
+    missionPatch(mission: String, size: PatchSize): String
   }
 
   type User {
@@ -34,16 +45,30 @@ const typeDefs = gql`
     trips: [Launch!]!
   }
 
-  type Mutation {
-    # if false booking trip failed, check errors
-    bookTrips(launchIds: [ID]!): TripUpdateResponse
-
-    # if false cancellation trip failed, check errors
-  }
-
   enum PatchSize {
     SMALL
     LARGE
+  }
+
+  type LaunchConnection { # add this below the Query type as an additional type.
+    cursor: String!
+    hasMore: Boolean!
+    launches: [Launch]!
+  }
+  type Mutation {
+    # if false booking trip failed, check errors
+    bookTrips(launchIds: [ID]!): TripUpdateResponse!
+
+    # if false cancellation trip failed, check errors
+    cancelTrip(launchId: ID!): TripUpdateResponse!
+
+    login(email: String): String #login token
+  }
+
+  type TripUpdateResponse {
+    success: Boolean!
+    message: String
+    launches: [Launch]
   }
 `;
 
